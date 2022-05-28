@@ -45,14 +45,22 @@ public:
         if constexpr (verbose)
             std::cout << "Suitable order for allocation of size '" << size << "' is: " << order << std::endl;
 
-        PhysicalAddress block = freelist.remove(order);
+        PhysicalAddress block = freelist.remove(order - min_order);
+        // if (block)
+        //     return block;
+
         Order ord = order;
 
-        for (; ord <= max_order; ++ord) {
+        // for (; block == nullptr; ++ord) {
+        while (!block) {
+            // while (ord < max_order) {
+            ++ord;
             block = freelist.remove(ord - min_order);
-
-            if (block != nullptr)
-                break;
+            // std::cout << "block: " << block << " " << std::dec << ord << '\n';
+            // if (ord == max_order+1)
+            //     return nullptr;
+            // if (block != nullptr)
+            //     break;
         }
 
         if (block == nullptr) {
