@@ -9,4 +9,4 @@ Benchmark results:
 <br>
 
 ## Benchmark image:
-<img src="results.png">
+<img src="benchmark.png">
