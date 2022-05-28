@@ -22,7 +22,6 @@ public:
     using Order = int;
     using PhysicalAddress = uint64_t *;
 
-
     constexpr static Order min_order = 9;
     constexpr static Order max_order = highest_order - 3;
 
@@ -46,21 +45,11 @@ public:
             std::cout << "Suitable order for allocation of size '" << size << "' is: " << order << std::endl;
 
         PhysicalAddress block = freelist.remove(order - min_order);
-        // if (block)
-        //     return block;
-
         Order ord = order;
 
-        // for (; block == nullptr; ++ord) {
         while (!block) {
-            // while (ord < max_order) {
             ++ord;
             block = freelist.remove(ord - min_order);
-            // std::cout << "block: " << block << " " << std::dec << ord << '\n';
-            // if (ord == max_order+1)
-            //     return nullptr;
-            // if (block != nullptr)
-            //     break;
         }
 
         if (block == nullptr) {
