@@ -44,7 +44,7 @@ public:
         if constexpr (verbose)
             std::cout << "Suitable order for allocation of size '" << size << "' is: " << order << std::endl;
 
-        PhysicalAddress block = nullptr;//freelist.remove(order - min_order);
+        PhysicalAddress block = nullptr;
         Order ord = order;
 
         for (; ord <= max_order; ord++) {
@@ -52,7 +52,7 @@ public:
             if (block != nullptr)
                 break;
         }
-        
+
         if (block == nullptr) {
             if constexpr (verbose)
                 std::cout << "Block is a nullptr (order: " << std::dec << order << ", size: " << size << ")\n";
