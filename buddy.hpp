@@ -6,6 +6,7 @@
 #include <cassert>    // assert
 #include <cstring>    // std::memset
 #include <iostream>   // std::cout, std::endl
+#include <queue>
 
 namespace {
 static constexpr bool verbose = false;
@@ -91,23 +92,26 @@ private:
     template <typename T, int orders>
     class Freelist {
     private:
-        T list[orders + 1]{};  // Todo: Think of a way to allocate enough memory for this array dynamically
+        std::queue<T> *list = new std::queue<T>[orders+1];
+        // T list[orders + 1]{};  // Todo: Think of a way to allocate enough memory for this array dynamically
 
     public:
         void add(const T &block, Order order) {
-            if (block)
-                *(T *)block = list[order];
-
-            list[order] = block;
+            list[order].push(block);
+            // std::cout << list[order].front() << " | " << block << " | " << order << '\n';
         }
 
         T remove(Order order) {
-            T element = list[order];
+            if (list[order].empty())
+                return nullptr;
 
+            T element = list[order].front();
             if (element == nullptr)
                 return nullptr;
 
-            list[order] = *(T *)list[order];
+            list[order].pop();
+
+            // list[order] = *(T *)list[order];
 
             return element;
         }
