@@ -18,8 +18,14 @@ int main(void) {
 
     // Allocate 1GiB in 4kib chunks for testing purposes
     for (auto i = 0; i < pages; i++) {
-        auto ptr = instance.alloc(4096);
-        // std::cout << "#" << std::dec << i << ": " << std::hex << ptr << '\n';
+        // TODO: Order 1 returns the size of order 0 for some reason... every other order is fine... look into that
+        auto ptr = instance.alloc(1);
+        if (!ptr) {
+            std::cout << "bad ptr ig\n";
+            break;
+        }
+        // auto ptr = instance.alloc(4096);
+        std::cout << "#" << std::dec << i << ": " << std::hex << ptr << '\n';
     }
 
     auto elapsed = std::chrono::high_resolution_clock::now() - start;
