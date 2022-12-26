@@ -112,12 +112,12 @@ public:
 
 private:
     class Helper {
-        long bitmap[1024]{ 0 };
+        long bitmap[16363]{ 0 };
         static constexpr int bitmap_block_size = sizeof(int) * 8;
 
     public:
         static constexpr int page_size = 4096;
-        static constexpr int tree_depth = 9;
+        static constexpr int tree_depth = 13;
 
         // Represents the number of bit-shifts required to get the last bit (aka number of bits in the bitmap)
         // (i.e. the right-most node at the bottom of the tree)

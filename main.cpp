@@ -19,7 +19,7 @@ int main(void) {
     // Allocate 1GiB in 4kib chunks for testing purposes
     for (auto i = 0; i < pages; i++) {
         // TODO: Order 1 returns the size of order 0 for some reason... every other order is fine... look into that
-        auto ptr = instance.alloc(9);
+        auto ptr = instance.alloc(13);
         if (!ptr) {
             // std::cout << "bad ptr ig\n";
             break;
