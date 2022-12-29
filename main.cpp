@@ -11,21 +11,44 @@ int main(void) {
     auto base = new uint64_t[1 << max_order];
     BuddyAllocator instance(base);
 
-    std::cout << "Buddy test: Allocating " << pages << " pages which totals " << memory_size << " bytes.\n";
+    // std::cout << "Buddy test: Allocating " << pages << " pages which totals " << memory_size << " bytes.\n";
     std::cout << "Base: 0x" << std::hex << (size_t)base << '\n';
 
     auto start = std::chrono::high_resolution_clock::now();
 
+    auto res1 = instance.alloc(2);
+    auto res2 = instance.alloc(2);
+    instance.alloc(1);
+
+    instance.free(res1.order, res1.buddy_index);
+    instance.free(res2.order, res2.buddy_index);
+    instance.alloc(1);  // should succeed
+    instance.alloc(4);  // should not succeed
+
+
+    // auto res = instance.alloc(1);
+    // std::cout << "ptr1: " << std::hex << res.address << '\n';
+
+    // auto res2 = instance.alloc(2);
+    // std::cout << "ptr2: " << std::hex << res2.address << '\n';
+
+    // std::cout << "Freeing ptr\n";
+    // instance.free(nullptr, 0, res.buddy_index);
+
+    // std::cout << "Allocating ptr, should be:\n" << res.address << '\n';
+    // auto res3 = instance.alloc(2);
+    // std::cout << "ptr is: " << res3.address << '\n';
+
     // Allocate 1GiB in 4kib chunks for testing purposes
-    for (auto i = 0; i < pages; i++) {
-        auto ptr = instance.alloc(9).address;
-        if (!ptr) {
-            // std::cout << "bad ptr ig\n";
-            break;
-        }
-        // auto ptr = instance.alloc(4096);
-        // std::cout << "#" << std::dec << i << ": " << std::hex << ptr << '\n';
-    }
+    // for (auto i = 0; i < pages; i++) {
+    //     auto res = instance.alloc(1);
+    //     if (!res.address) {
+    //         break;
+    //     }
+    // 	instance.free(nullptr, 0, res.buddy_index);
+    //     // auto ptr = instance.alloc(4096);
+    //     std::cout << "#" << std::dec << i << ": " << std::hex << res.address << '\n';
+    // }
 
     // Expectedly fails. Allocator is OOM.
     // std::cout << "Trying again..." << instance.alloc(9) << '\n';

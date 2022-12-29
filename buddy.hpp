@@ -99,7 +99,28 @@ public:
         return false;
     }
 
-    void free(AddressType block, Order order) {
+    void free(AllocationResult alloc_result) {
+        const auto [order, buddy_index, _] = alloc_result;
+        free(order, buddy_index);
+    }
+
+    void free(Order order, int allocated_node_idx) {
+        /*
+                1. clear this node
+                2. If buddy of node is cleared, we can merge (i.e. clear the parent node)
+                3. Ascend to parent order and repeat
+        */
+
+        auto const coalesce = [&](int idx) {
+            bool buddy_node_in_use = order == 0 || helper.test_bit(helper.buddy_of(idx));
+
+            if (!buddy_node_in_use) {
+                helper.clear_bit(helper.parent_of(idx));
+            }
+        };
+
+        helper.clear_bit(allocated_node_idx);                 // Free this node (address).
+        helper.recurse_parent(coalesce, allocated_node_idx);  // Coalesce
     }
 
 private:
@@ -136,6 +157,11 @@ private:
 
         void set_bit(int idx) {
             bitmap[idx / bitmap_block_size] |= (1 << (idx % bitmap_block_size));
+        }
+
+        void clear_bit(int idx) {
+            bitmap[idx / bitmap_block_size] &= ~(1 << (idx % bitmap_block_size));
+            // if (buddy_of(idx) == 0) {}
         }
 
         // Set bit if clear
@@ -189,9 +215,6 @@ private:
             recurse_children(f, right_child(current_idx));
         }
     };
-
-    void coalesce(AddressType block, Order order) {
-    }
 
 private:
     Helper helper;
