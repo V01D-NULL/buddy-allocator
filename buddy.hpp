@@ -2,10 +2,9 @@
 
 #include <stdint.h>
 
-#include <algorithm>  // std::min, std::max
-#include <cassert>    // assert
-#include <cstring>    // std::memset
-#include <iostream>   // std::cout, std::endl
+#include <iostream>
+
+#include "external/rbtree.hpp"
 
 namespace {
 static constexpr bool verbose = false;
@@ -123,6 +122,15 @@ public:
         helper.recurse_parent(coalesce, allocated_node_idx);  // Coalesce
     }
 
+public:
+    frg::rbtree_hook tree_hook;
+    struct traversal {
+        bool operator()(const BuddyAllocator& a, const BuddyAllocator& b) {
+            // TODO: sort by available memory
+            return true;
+        }
+    };
+
 private:
     class Helper {
         long bitmap[8191]{ 0 };
@@ -130,7 +138,7 @@ private:
 
     public:
         static constexpr int page_size = 4096;
-        static constexpr int tree_depth = 9;
+        static constexpr int tree_depth = 12;
 
         // Represents the number of bit-shifts required to get the last bit (aka number of bits in the bitmap)
         // (i.e. the right-most node at the bottom of the tree)

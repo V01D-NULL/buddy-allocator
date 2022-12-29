@@ -1,5 +1,7 @@
 # C++ Buddy allocator
 
+Uses an external library frigg for a rbtree implementation. This is optional and the buddy allocator does not require it to function.
+
 Benchmark results:
 
 - Allocated `262144` 4kib large pages (i.e. 1GiB worth of memory in 4kib chunks)
