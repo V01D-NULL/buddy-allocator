@@ -17,22 +17,33 @@ enum FillMode : char {
     NONE = 1  // Don't fill
 };
 
+using AddressType = uint64_t*;
+using Order = int;
+
+struct AllocationResult {
+    Order order;
+    int buddy_index;
+    AddressType address{ nullptr };
+
+    AllocationResult() = default;
+    AllocationResult(uint64_t ord, int idx, AddressType addr)
+        : order(ord), buddy_index(idx), address(addr) {
+    }
+};
+
 class BuddyAllocator {
 public:
-    using Order = int;
-    using PhysicalAddress = uint64_t *;
-
-    BuddyAllocator(PhysicalAddress base)
-        : base(base) {
+    BuddyAllocator(AddressType base)
+        : base(reinterpret_cast<uintptr_t>(base)) {
     }
 
-    PhysicalAddress alloc(uint64_t order, FillMode fill = FillMode::NONE) {
+    AllocationResult alloc(Order order, FillMode fill = FillMode::NONE) {
         int idx_begin, idx_end;
 
         if constexpr (safety_checks) {
             if (order > helper.min_order || order < helper.max_order) {
                 std::cout << "Bad order: " << order << "\n";
-                return nullptr;
+                return AllocationResult();
             }
         }
 
@@ -63,22 +74,20 @@ public:
         // Step 3.
         // Allocate child and parent nodes
         if (allocated_node_idx == -1) {
-            std::cout << "Failed to allocate memory at order " << order << '\n';
-            return nullptr;
+            std::cout << "Failed to allocate memory at order " << std::dec << order << '\n';
+            return AllocationResult();
         }
 
-        recursive_allocate_parent(allocated_node_idx);
-        recursive_allocate_children(allocated_node_idx);
+        auto const set = [&](int idx) { helper.set_bit(idx); };
+        helper.recurse_parent(set, allocated_node_idx);
+        helper.recurse_children(set, allocated_node_idx);
 
-        if (allocated_node_idx == 1)
-            allocated_node_idx = 0;
-
-        // return (PhysicalAddress)(((uintptr_t)this->base + allocated_node_idx) );
-        return (PhysicalAddress)((uintptr_t)(this->base) + (allocated_node_idx * helper.order_to_size(order)));
-        // return (BASE_ADDRESS + (allocated_node_idx * helper.order_to_size(order)));
-        return nullptr;
+        AddressType addr = reinterpret_cast<AddressType>(this->base + (allocated_node_idx * helper.order_to_size(order)));
+        return AllocationResult(order, allocated_node_idx, addr);
     }
 
+    // Tries to allocate a node at order 'order'.
+    // Returns true if successful, otherwise false.
     bool scan_order(int order) {
         int begin = 0;
         int end = helper.nodes_at_order(order);
@@ -90,34 +99,17 @@ public:
         return false;
     }
 
-    void recursive_allocate_parent(int current_idx) {
-        helper.set_bit(current_idx);
-        if (current_idx == 0) return;
-
-        recursive_allocate_parent(helper.parent_of(current_idx));
-    }
-
-
-    void recursive_allocate_children(int current_idx) {
-        if (current_idx > helper.last_bit) return;
-
-        helper.set_bit(current_idx);
-        recursive_allocate_children(helper.left_child(current_idx));
-        recursive_allocate_children(helper.right_child(current_idx));
-    }
-
-
-    void free(PhysicalAddress block, Order order) {
+    void free(AddressType block, Order order) {
     }
 
 private:
     class Helper {
-        long bitmap[16363]{ 0 };
+        long bitmap[8191]{ 0 };
         static constexpr int bitmap_block_size = sizeof(int) * 8;
 
     public:
         static constexpr int page_size = 4096;
-        static constexpr int tree_depth = 13;
+        static constexpr int tree_depth = 9;
 
         // Represents the number of bit-shifts required to get the last bit (aka number of bits in the bitmap)
         // (i.e. the right-most node at the bottom of the tree)
@@ -175,12 +167,33 @@ private:
         int right_child(int idx) {
             return (idx * 2) + 2;
         }
+
+        //
+        // These functions traverse the parent and child nodes.
+        // They also perform a callback 'f' which is set_bit() for allocation or clear_bit() for deallocation
+        //
+        template <typename F>
+        void recurse_parent(F f, int current_idx) {
+            f(current_idx);
+            if (current_idx == 0) return;
+
+            recurse_parent(f, parent_of(current_idx));
+        }
+
+        template <typename F>
+        void recurse_children(F f, int current_idx) {
+            if (current_idx > this->last_bit) return;
+
+            f(current_idx);
+            recurse_children(f, left_child(current_idx));
+            recurse_children(f, right_child(current_idx));
+        }
     };
 
-    void coalesce(PhysicalAddress block, Order order) {
+    void coalesce(AddressType block, Order order) {
     }
 
 private:
     Helper helper;
-    PhysicalAddress base;
+    uintptr_t base;
 };
